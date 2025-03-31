@@ -46,7 +46,7 @@ router.get('/me', check_authentication, async function (req, res, next) {
         next(error)
     }
 });
-router.post('/changepassword',check_authentication, async function (req, res, next) {
+router.post('/changepassword', check_authentication, async function (req, res, next) {
     try {
         let oldpassword = req.body.oldpassword;
         let newpassword = req.body.newpassword;

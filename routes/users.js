@@ -7,18 +7,42 @@ let { check_authentication, check_authorization } = require("../utils/check_auth
 const constants = require('../utils/constants');
 
 /* GET users listing. */
-router.get('/', check_authentication, check_authorization(['admin'])
-  , async function (req, res, next) {
-    try {
-      let users = await userControllers.getAllUsers()
+router.get('/', check_authentication, check_authorization(constants.MOD_PERMISSION), async function (req, res, next) {
+  try {
+    let users = await userControllers.getAllUsers()
+    res.send({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    next(error)
+  }
+});
+
+router.get('/:id', check_authentication, async function (req, res, next) {
+  try {
+    // Allow users to access their own data, require mod for others
+    if (req.user._id.toString() === req.params.id) {
+      let user = await userControllers.getUserById(req.params.id);
       res.send({
         success: true,
-        data: users
+        data: user
       });
-    } catch (error) {
-      next(error)
+    } else {
+      // For other users' data, check if requester has mod permissions
+      check_authorization(constants.MOD_PERMISSION)(req, res, async () => {
+        let user = await userControllers.getUserById(req.params.id);
+        res.send({
+          success: true,
+          data: user
+        });
+      });
     }
-  });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post('/', check_authentication, check_authorization(constants.ADMIN_PERMISSION), async function (req, res, next) {
   try {
     let body = req.body;
@@ -38,9 +62,9 @@ router.post('/', check_authentication, check_authorization(constants.ADMIN_PERMI
       message: error.message
     });
   }
-
 });
-router.put('/:id', async function (req, res, next) {
+
+router.put('/:id', check_authentication, check_authorization(constants.ADMIN_PERMISSION), async function (req, res, next) {
   try {
     let body = req.body;
     let updatedUser = await userControllers.updateAnUser(req.params.id, body);
@@ -52,7 +76,8 @@ router.put('/:id', async function (req, res, next) {
     next(error)
   }
 });
-router.delete('/:id', async function (req, res, next) {
+
+router.delete('/:id', check_authentication, check_authorization(constants.ADMIN_PERMISSION), async function (req, res, next) {
   try {
     let deleteUser = await userControllers.deleteAnUser(req.params.id);
     res.status(200).send({
@@ -62,6 +87,6 @@ router.delete('/:id', async function (req, res, next) {
   } catch (error) {
     next(error)
   }
-
 });
+
 module.exports = router;

@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 let productSchema = require('../schemas/product')
 let categorySchema = require('../schemas/category')
+let { check_authentication, check_authorization } = require("../utils/check_auth");
+const constants = require('../utils/constants');
 /* GET users listing. */
 function BuildQuery(query){
   let result = {};
@@ -52,7 +54,7 @@ router.get('/:id', async function(req, res, next) {
     });
   }
 });
-router.post('/', async function(req, res, next) {
+router.post('/', check_authentication, check_authorization(constants.MOD_PERMISSION), async function(req, res, next) {
   try {
     let body = req.body;
     let category = body.category;
@@ -84,7 +86,7 @@ router.post('/', async function(req, res, next) {
     });
   }
 });
-router.put('/:id', async function(req, res, next) {
+router.put('/:id', check_authentication, check_authorization(constants.MOD_PERMISSION), async function(req, res, next) {
   try {
     let id = req.params.id;
     let product = await productSchema.findById(id);
@@ -120,7 +122,7 @@ router.put('/:id', async function(req, res, next) {
     });
   }
 });
-router.delete('/:id', async function(req, res, next) {
+router.delete('/:id', check_authentication, check_authorization(constants.ADMIN_PERMISSION), async function(req, res, next) {
   try {
     let id = req.params.id;
     let product = await productSchema.findById(id);
